@@ -1,0 +1,6 @@
+{
+  "name": "Guitar Tabs Viewer",
+  "description": "Browse and view guitar tab files directly from the Riffjordan12/guitar-tabs GitHub repository.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

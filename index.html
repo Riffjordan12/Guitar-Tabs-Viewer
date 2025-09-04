@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tabs Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate-900 */
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 1.5rem;
+            background-color: #1e293b; /* Slate-800 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .file-list::-webkit-scrollbar {
+            display: none;
+        }
+        .file-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .file-item:hover {
+            background-color: #334155; /* Slate-700 */
+        }
+        .file-icon {
+            margin-right: 0.75rem;
+        }
+        pre {
+            background-color: #0c0d12;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-height: 500px;
+        }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gray-900 text-gray-100 p-4 min-h-screen">
+    <div class="container mt-8">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold text-center md:text-left text-blue-400">Guitar Tabs Viewer</h1>
+            <button id="fetchButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-full transition-colors duration-200 mt-4 md:mt-0 shadow-lg">
+                Fetch Tabs
+            </button>
+        </div>
+
+        <div id="loading" class="hidden text-center text-gray-400">
+            <svg class="animate-spin h-8 w-8 text-blue-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-2">Fetching repository contents...</p>
+        </div>
+
+        <div id="content" class="mt-6">
+            <div id="fileListContainer" class="hidden">
+                <h2 class="text-xl font-semibold mb-4 text-gray-300">Repository Contents</h2>
+                <ul id="fileList" class="file-list bg-gray-700 rounded-lg p-2 border border-gray-600">
+                    <!-- File list will be populated here -->
+                </ul>
+            </div>
+
+            <div id="fileContentContainer" class="hidden mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 id="fileName" class="text-xl font-semibold text-gray-300 truncate"></h2>
+                    <button id="backButton" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-1 px-4 rounded-full transition-colors duration-200 shadow-md">
+                        Back to List
+                    </button>
+                </div>
+                <pre id="fileContent" class="text-sm text-gray-200 leading-relaxed"></pre>
+            </div>
+        </div>
+
+        <div id="error" class="hidden text-center text-red-400 mt-6 p-4 bg-red-900 rounded-lg">
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        const owner = 'Riffjordan12';
+        const repo = 'guitar-tabs';
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+        
+        const fetchButton = document.getElementById('fetchButton');
+        const fileList = document.getElementById('fileList');
+        const fileListContainer = document.getElementById('fileListContainer');
+        const fileContentContainer = document.getElementById('fileContentContainer');
+        const backButton = document.getElementById('backButton');
+        const loading = document.getElementById('loading');
+        const errorContainer = document.getElementById('error');
+        const errorMessage = document.getElementById('errorMessage');
+
+        const fileIconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-400">
+                <path d="M19.5 7.5c-1.257 0-2.52.32-3.8.943-.538.269-1.077.493-1.634.694A23.864 23.864 0 0112 9.75c-.94 0-1.847-.077-2.73-.22-.557-.201-1.096-.425-1.634-.694C7.02 7.82 5.757 7.5 4.5 7.5c-1.243 0-2.39.42-3.14 1.144-.805.77-1.397 1.954-1.528 3.434-.132 1.48.27 2.923 1.11 4.243.834 1.325 2.016 2.378 3.52 3.149 1.503.771 3.234 1.15 5.14 1.15s3.637-.379 5.14-1.15c1.504-.771 2.686-1.824 3.52-3.149.84-1.32 1.242-2.763 1.11-4.243-.13-1.48-.723-2.664-1.528-3.434C21.89 7.92 20.743 7.5 19.5 7.5zM12 21a9 9 0 100-18 9 9 0 000 18z" />
+            </svg>
+        `;
+
+        const folderIconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-yellow-400">
+                <path d="M.25 10.375A2.625 2.625 0 012.875 7.75h18.25a2.625 2.625 0 012.625 2.625v7.25a2.625 2.625 0 01-2.625 2.625h-18.25A2.625 2.625 0 01.25 17.625v-7.25z" />
+            </svg>
+        `;
+
+        const displayError = (message) => {
+            errorMessage.textContent = message;
+            errorContainer.classList.remove('hidden');
+            loading.classList.add('hidden');
+        };
+
+        const showLoading = () => {
+            loading.classList.remove('hidden');
+            fileListContainer.classList.add('hidden');
+            fileContentContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+        };
+
+        const hideAllViews = () => {
+            loading.classList.add('hidden');
+            fileListContainer.classList.add('hidden');
+            fileContentContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+        };
+
+        const fetchRepoContents = async (path = '') => {
+            showLoading();
+            fileList.innerHTML = ''; // Clear previous list
+            try {
+                const response = await fetch(apiUrl + path);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    displayError('This directory is empty.');
+                    return;
+                }
+
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.classList.add('file-item', 'text-gray-200');
+                    const icon = item.type === 'dir' ? folderIconSvg : fileIconSvg;
+                    li.innerHTML = `${icon}<span class="flex-grow">${item.name}</span>`;
+
+                    if (item.type === 'file') {
+                        li.dataset.url = item.url;
+                        li.addEventListener('click', () => fetchFileContent(item.url, item.name));
+                    } else {
+                        // For a directory, recursively fetch its contents.
+                        li.addEventListener('click', () => fetchRepoContents(item.path));
+                    }
+                    fileList.appendChild(li);
+                });
+                
+                loading.classList.add('hidden');
+                fileListContainer.classList.remove('hidden');
+
+            } catch (e) {
+                displayError(`Failed to fetch repository contents: ${e.message}.`);
+            }
+        };
+
+        const fetchFileContent = async (url, fileName) => {
+            showLoading();
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // GitHub API returns file content in base64
+                const decodedContent = atob(data.content);
+                
+                document.getElementById('fileName').textContent = fileName;
+                document.getElementById('fileContent').textContent = decodedContent;
+
+                loading.classList.add('hidden');
+                fileListContainer.classList.add('hidden');
+                fileContentContainer.classList.remove('hidden');
+
+            } catch (e) {
+                displayError(`Failed to fetch file content: ${e.message}.`);
+            }
+        };
+
+        fetchButton.addEventListener('click', () => fetchRepoContents());
+        backButton.addEventListener('click', () => {
+            hideAllViews();
+            fileListContainer.classList.remove('hidden');
+        });
+
+        // Initial fetch on page load
+        fetchRepoContents();
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
