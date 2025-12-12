@@ -24,7 +24,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/13Hi13Ogrg3aqDZHVKVLGqb
 
 ## Alternative: Using the Guitar Notes Legacy Project
 
-For a more feature-rich guitar notes management system, you can use the [guitar-notes--legacy-project](https://github.com/tkozuch/guitar-notes--legacy-project.git) repository. This is a full-stack application that allows you to create, edit, and manage your own guitar notes and tabs.
+For a more feature-rich guitar notes management system, you can use the [guitar-notes--legacy-project](https://github.com/tkozuch/guitar-notes--legacy-project) repository. This is a full-stack application that allows you to create, edit, and manage your own guitar notes and tabs.
 
 ### Features of Guitar Notes Legacy Project
 
@@ -72,7 +72,7 @@ For a more feature-rich guitar notes management system, you can use the [guitar-
 
 | Feature | Guitar Tabs Viewer | Guitar Notes Legacy Project |
 |---------|-------------------|----------------------------|
-| Setup Complexity | Simple (static HTML) | Moderate (full-stack) |
+| Setup Complexity | Simple (Vite-based) | Moderate (full-stack) |
 | Data Source | GitHub API (read-only) | Local JSON (editable) |
 | Editing | No | Yes (WYSIWYG editor) |
 | Storage | None (reads from GitHub) | Local file system |
